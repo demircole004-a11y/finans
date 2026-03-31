@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AFAD Power BI - Finansal Derinlik & İşlem Analizi</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#f3f2f1;color:#252423;}
+.wrap{padding:20px;display:flex;flex-direction:column;gap:16px;}
+
+/* HEADER & FILTERS (Power BI Slicers) */
+.filter-bar{display:flex; align-items:center; gap:12px; background:#fff; padding:12px 20px; border-radius:4px; border:1px solid #e1dfdd; box-shadow: 0 2px 4px rgba(0,0,0,0.02); flex-wrap:wrap;}
+.f-group{display:flex; flex-direction:column; gap:4px;}
+.f-lbl{font-size:10px; font-weight:700; color:#605e5c; text-transform:uppercase;}
+.f-sel{font-size:12px; padding:6px 12px; border:1px solid #c8d4e8; border-radius:2px; outline:none; color:#252423; cursor:pointer; min-width:140px;}
+.f-btn{background:#edebe9; color:#252423; border:1px solid #8a8886; padding:8px 16px; border-radius:2px; font-size:12px; font-weight:600; cursor:pointer; align-self:flex-end; margin-left:auto; transition:background 0.2s;}
+.f-btn:hover{background:#e1dfdd;}
+
+.panel-title{font-size:14px;font-weight:700;color:#0054a6;letter-spacing:.3px;border-left:4px solid #f47920;padding-left:12px; margin-bottom:4px;}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+.kpi{background:#fff;border-radius:4px;padding:16px;border:1px solid #e1dfdd; box-shadow: 0 2px 4px rgba(0,0,0,0.06); border-left:4px solid transparent;}
+.kpi-blue{border-left-color:#0054a6;}
+.kpi-orange{border-left-color:#f47920;}
+.kpi-green{border-left-color:#107c41;}
+.kpi-purple{border-left-color:#7c3aed;}
+.kpi-red{border-left-color:#c0392b;}
+.kpi-lbl{font-size:11px;color:#605e5c;font-weight:600;text-transform:uppercase;margin-bottom:8px;}
+.kpi-val{font-size:23px;font-weight:300;color:#252423;line-height:1.1; letter-spacing:-0.5px;}
+.kpi-sub{font-size:11px;margin-top:8px;color:#605e5c; display:flex; align-items:center; gap:4px;}
+.up{color:#107c41; font-weight:600;} .dn{color:#c0392b; font-weight:600;}
+
+/* GRIDS */
+.two-col{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;}
+.two-col-equal{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.chart-box{background:#fff;border-radius:4px;padding:16px 20px;border:1px solid #e1dfdd; box-shadow: 0 2px 4px rgba(0,0,0,0.06); display:flex; flex-direction:column;}
+.chart-title{font-size:14px;font-weight:600;color:#252423;margin-bottom:4px;}
+.chart-sub{font-size:11px;color:#605e5c;margin-bottom:16px; line-height:1.3;}
+
+/* CURRENCY BREAKDOWN BARS */
+.curr-list{display:flex; flex-direction:column; gap:12px;}
+.curr-row{display:flex; flex-direction:column; gap:4px;}
+.curr-header{display:flex; justify-content:space-between; align-items:flex-end;}
+.curr-name{font-size:12px; font-weight:700; color:#252423; display:flex; align-items:center; gap:6px;}
+.curr-badge{font-size:9px; background:#f3f2f1; padding:2px 6px; border-radius:2px; color:#605e5c; font-weight:600;}
+.curr-try{font-size:13px; font-weight:700; color:#0054a6;}
+.curr-track{width:100%; height:8px; background:#f3f2f1; border-radius:2px; overflow:hidden;}
+.curr-fill{height:100%; border-radius:2px;}
+.curr-orig{font-size:11px; color:#605e5c; font-weight:600;}
+
+/* HORIZONTAL DATA BARS */
+.bar-list{display:flex; flex-direction:column; gap:10px; flex:1; overflow-y:auto;}
+.bar-row{display:flex; align-items:center; gap:12px;}
+.bar-lbl{width:100px; font-size:11px; font-weight:600; color:#252423; text-align:right; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.bar-track{flex:1; background:#f3f2f1; height:22px; border-radius:2px; position:relative;}
+.bar-fill{height:100%; border-radius:2px; display:flex; align-items:center; padding-left:8px;}
+.bar-val{width:95px; font-size:11px; font-weight:700; color:#252423; text-align:right; flex-shrink:0;}
+
+.err-tag{font-size:9px; padding:2px 6px; border-radius:2px; flex-shrink:0; font-weight:600;}
+.e-tech{background:#fdecea; color:#c0392b;}
+.e-user{background:#fff4ce; color:#b45309;}
+
+.legend-row{display:flex; gap:16px; margin-bottom:12px;}
+.leg-item{display:flex; align-items:center; gap:6px; font-size:11px; color:#605e5c;}
+.leg-dot{width:12px; height:4px; border-radius:1px;}
+.leg-dsh{width:12px; height:0; border-top:2px dashed;}
+
+/* PIE CHART STYLES */
+.pie-container{display:flex; align-items:center; justify-content:center; flex:1; gap:24px;}
+.pie-legend{display:flex; flex-direction:column; gap:6px; flex:1;}
+.pleg-item{display:flex; align-items:center; gap:8px; font-size:11px; color:#252423;}
+.pleg-dot{width:10px; height:10px; border-radius:2px; flex-shrink:0;}
+.pleg-pct{font-weight:700; margin-left:auto;}
+.pleg-val{font-size:10px; color:#605e5c; margin-right:6px; font-weight:600;}
+
+/* TRANSACTION SUMMARY (Mini KPI) */
+.txn-summary{display:flex; gap:20px; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid #e1dfdd;}
+.txn-box{display:flex; flex-direction:column; gap:2px;}
+.txn-lbl{font-size:11px; color:#605e5c;}
+.txn-val{font-size:18px; font-weight:700;}
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="filter-bar">
+    <div class="f-group">
+      <span class="f-lbl">Dönem</span>
+      <select class="f-sel">
+        <option>Tüm Zamanlar</option>
+        <option>Bu Yıl</option>
+        <option>Geçen Yıl</option>
+      </select>
+    </div>
+    <div class="f-group">
+      <span class="f-lbl">Kampanya</span>
+      <select class="f-sel">
+        <option>Tümü (Genel)</option>
+        <option>Deprem Bağışları</option>
+        <option>Filistin Yardımı</option>
+      </select>
+    </div>
+    <div class="f-group">
+      <span class="f-lbl">Para Birimi</span>
+      <select class="f-sel">
+        <option>Tümü (TRY Bazlı)</option>
+        <option>Sadece TRY</option>
+        <option>Sadece Döviz</option>
+      </select>
+    </div>
+    <button class="f-btn">Filtreleri Uygula</button>
+  </div>
+
+  <div class="panel-title">Panel 2 — Finansal Derinlik, Döviz Kırılımı & İşlem Analizi</div>
+
+  <div class="kpi-row">
+    <div class="kpi kpi-blue">
+      <div class="kpi-lbl">Toplam Toplanan Bağış</div>
+      <div class="kpi-val">₺8.413.000.000</div>
+      <div class="kpi-sub"><span class="up">▲ %12</span> geçen yıla göre artış</div>
+    </div>
+    <div class="kpi kpi-orange">
+      <div class="kpi-lbl">TRY Cinsinden Bağışlar</div>
+      <div class="kpi-val">₺7.500.000.000</div>
+      <div class="kpi-sub">Toplam kasanın %89.1'i</div>
+    </div>
+    <div class="kpi kpi-green">
+      <div class="kpi-lbl">Döviz Cinsinden Bağışlar</div>
+      <div class="kpi-val">₺913.000.000</div>
+      <div class="kpi-sub">TCMB kurları ile hesaplanmış TRY</div>
+    </div>
+    <div class="kpi kpi-purple">
+      <div class="kpi-lbl">Yurtdışı İşlem Hacmi</div>
+      <div class="kpi-val">4.730 Kişi</div>
+      <div class="kpi-sub"><span class="up">▲ 64</span> farklı ülkeden döviz girişi</div>
+    </div>
+    <div class="kpi kpi-red">
+      <div class="kpi-lbl">Başarısız İşlem Oranı</div>
+      <div class="kpi-val">%5.5</div>
+      <div class="kpi-sub"><span class="dn">▲ 0.4 Puan</span> artış var</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="chart-box">
+      <div class="chart-title">Aylık Bağış Trendi (TRY vs Döviz Karşılıkları)</div>
+      <div class="chart-sub">12 Aylık Trend · Günlük TCMB döviz alış kurları ile dönüştürülerek ortak TRY paydasında birleştirilmiştir.</div>
+      <div class="legend-row">
+        <div class="leg-item"><div class="leg-dot" style="background:#0054a6;"></div>TRY (Doğrudan)</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#107c41;"></div>USD → TRY</div>
+        <div class="leg-item"><div class="leg-dsh" style="border-color:#f47920;"></div>EUR → TRY</div>
+        <div class="leg-item"><div class="leg-dsh" style="border-color:#7c3aed;"></div>GBP → TRY</div>
+      </div>
+      <div style="position:relative;height:240px;"><canvas id="c-curr"></canvas></div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title">Para Birimi Dağılımı ve TCMB Kur Çevrimi</div>
+      <div class="chart-sub">Toplam ₺8.413.000.000 bağışın orijinal döviz miktarları ve sisteme giriş kurları.</div>
+      
+      <div class="curr-list" id="curr-area" style="margin-top:12px;">
+        </div>
+    </div>
+  </div>
+
+  <div class="two-col-equal">
+    <div class="chart-box">
+      <div class="chart-title">En Çok Bağış Yapan İller (İlk 10)</div>
+      <div class="chart-sub">Hacimsel bazda Türkiye geneli en yüksek finansal katkıyı sağlayan iller.</div>
+      <div class="bar-list" id="top-city-area" style="margin-top:8px;"></div>
+    </div>
+    
+    <div class="chart-box">
+      <div class="chart-title">En Az Bağış Yapan İller (Son 10)</div>
+      <div class="chart-sub">Hacimsel bazda en düşük finansal katkıyı sağlayan iller. (Görünürlük için kendi içinde oranlanmıştır)</div>
+      <div class="bar-list" id="bottom-city-area" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div class="three-col">
+    
+    <div class="chart-box">
+      <div class="chart-title">Bağışların Profil Dağılımı (Hacimsel)</div>
+      <div class="chart-sub">Kredi kartından geçen toplam ₺8.413.000.000 hacmin bağışçı sadakatine göre dağılımı.</div>
+      <div class="pie-container" style="margin-top:12px;">
+        <div style="position:relative; width:130px; height:130px;"><canvas id="c-pie-profile"></canvas></div>
+        <div class="pie-legend" id="leg-profile"></div>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title">İşlem (Transaction) & Hata Analizi</div>
+      <div class="chart-sub">Sadece Kredi Kartı (Sanal POS) işlemleri baz alınmıştır.</div>
+      
+      <div class="txn-summary">
+        <div class="txn-box">
+          <span class="txn-lbl">Başarılı İşlem Sayısı</span>
+          <span class="txn-val" style="color:#107c41;">1.450.230</span>
+        </div>
+        <div class="txn-box">
+          <span class="txn-lbl">Başarısız İşlem Sayısı</span>
+          <span class="txn-val" style="color:#c0392b;">84.410</span>
+        </div>
+      </div>
+
+      <div class="bar-list" id="err-area"></div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title">Aylara Göre Bağış Sıralaması</div>
+      <div class="chart-sub">Son 12 ay bazında tüm kanallardan gelen toplam hacmin aylara göre sıralanması.</div>
+      <div class="bar-list" id="month-area" style="margin-top:8px;"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// --- CHART.JS GLOBAL AYARLARI ---
+Chart.defaults.font.family = "'Segoe UI', 'Inter', sans-serif";
+Chart.defaults.color = '#605e5c';
+Chart.defaults.plugins.tooltip.backgroundColor = '#ffffff';
+Chart.defaults.plugins.tooltip.titleColor = '#252423';
+Chart.defaults.plugins.tooltip.bodyColor = '#252423';
+Chart.defaults.plugins.tooltip.borderColor = '#e1dfdd';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+
+// ==========================================
+// 1. PARA BİRİMİ TRENDİ (Line Chart)
+// ==========================================
+const M12=['Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara','Oca','Şub','Mar'];
+new Chart(document.getElementById('c-curr'),{
+  type:'line',
+  data:{
+    labels:M12,
+    datasets:[
+      {label:'TRY (Doğrudan)',data:[480000000, 510000000, 490000000, 750000000, 520000000, 480000000, 505000000, 610000000, 850000000, 580000000, 675000000, 1050000000],borderColor:'#0054a6',backgroundColor:'rgba(0,84,166,.1)',fill:true,borderWidth:2.5,pointRadius:0,tension:.4},
+      {label:'USD→TRY',data:[42000000, 45000000, 40000000, 65000000, 48000000, 41000000, 46000000, 52000000, 75000000, 50000000, 68000000, 94000000],borderColor:'#107c41',borderWidth:2,pointRadius:0,fill:false,tension:.4},
+      {label:'EUR→TRY',data:[12000000, 15000000, 11000000, 22000000, 14000000, 10000000, 13000000, 16000000, 28000000, 14000000, 21000000, 34600000],borderColor:'#f47920',borderWidth:2,pointRadius:0,fill:false,tension:.4,borderDash:[4,3]},
+      {label:'GBP→TRY',data:[2000000, 2500000, 1800000, 3500000, 2200000, 1500000, 2000000, 2800000, 5000000, 2500000, 4000000, 6600000],borderColor:'#7c3aed',borderWidth:1.5,pointRadius:0,fill:false,tension:.4,borderDash:[2,4]},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{mode:'index',intersect:false,callbacks:{label:c=>`${c.dataset.label}: ₺${c.parsed.y.toLocaleString('tr-TR')}`}}
+    },
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10},color:'#605e5c'}},
+      y:{grid:{color:'#f3f2f1'},ticks:{font:{size:10},color:'#605e5c',callback:v=>`₺${v.toLocaleString('tr-TR')}`}}
+    }
+  }
+});
+
+// ==========================================
+// 2. DÖVİZ KIRILIMI VE TCMB KUR DETAYI
+// ==========================================
+const currData = [
+  { name: 'Türk Lirası (TRY)',  tryVal: 7500000000, origVal: null,       rate: null,  sym: '₺', color: '#0054a6' },
+  { name: 'ABD Doları (USD)',   tryVal: 666000000,  origVal: 18500000,   rate: 36.00, sym: '$', color: '#107c41' },
+  { name: 'Euro (EUR)',         tryVal: 210600000,  origVal: 5400000,    rate: 39.00, sym: '€', color: '#f47920' },
+  { name: 'İng. Sterlini (GBP)',tryVal: 36400000,   origVal: 750000,     rate: 48.53, sym: '£', color: '#7c3aed' }
+];
+
+const currArea = document.getElementById('curr-area');
+const totalTry = 8413000000;
+
+currData.forEach(c => {
+  const pct = ((c.tryVal / totalTry) * 100).toFixed(1);
+  let origText = '';
+  let badgeText = '';
+  
+  if(c.origVal !== null) {
+    origText = `${c.sym}${c.origVal.toLocaleString('tr-TR')} (Orijinal Tutar)`;
+    badgeText = `<span class="curr-badge" title="TCMB Çevrim Kuru">TCMB Kur: ₺${c.rate.toFixed(2)}</span>`;
+  } else {
+    origText = `Doğrudan TRY İşlemleri`;
+    badgeText = `<span class="curr-badge">Yerel Para Birimi</span>`;
+  }
+
+  currArea.innerHTML += `
+    <div class="curr-row">
+      <div class="curr-header">
+        <span class="curr-name"><span style="color:${c.color};">■</span> ${c.name} ${badgeText}</span>
+        <span class="curr-try">₺${c.tryVal.toLocaleString('tr-TR')}</span>
+      </div>
+      <div class="curr-track">
+        <div class="curr-fill" style="width:${pct}%; background:${c.color};"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="curr-orig">${origText}</span>
+        <span style="font-size:10px; font-weight:700; color:#252423;">%${pct}</span>
+      </div>
+    </div>
+  `;
+});
+
+// ==========================================
+// 3. İL BAZLI FİNANSAL KIRILIM (Top 10 / Son 10)
+// ==========================================
+const topCities = [
+  { name: 'İstanbul', amount: 3200000000 }, { name: 'Ankara', amount: 1250000000 },
+  { name: 'İzmir', amount: 840000000 }, { name: 'Bursa', amount: 420000000 },
+  { name: 'Antalya', amount: 380000000 }, { name: 'Adana', amount: 290000000 },
+  { name: 'Konya', amount: 245000000 }, { name: 'Gaziantep', amount: 210000000 },
+  { name: 'Kocaeli', amount: 185000000 }, { name: 'Şanlıurfa', amount: 160000000 }
+];
+
+const bottomCities = [
+  { name: 'Bayburt', amount: 450000 }, { name: 'Ardahan', amount: 520000 },
+  { name: 'Tunceli', amount: 610000 }, { name: 'Kilis', amount: 750000 },
+  { name: 'Iğdır', amount: 880000 }, { name: 'Gümüşhane', amount: 950000 },
+  { name: 'Bartın', amount: 1100000 }, { name: 'Karaman', amount: 1250000 },
+  { name: 'Şırnak', amount: 1400000 }, { name: 'Hakkari', amount: 1550000 }
+];
+
+const topArea = document.getElementById('top-city-area');
+const maxTop = topCities[0].amount;
+topCities.forEach(c => {
+  const pct = (c.amount / maxTop * 100).toFixed(1);
+  topArea.innerHTML += `
+    <div class="bar-row">
+      <span class="bar-lbl" title="${c.name}">${c.name}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%; background:#0054a6;"></div>
+      </div>
+      <span class="bar-val">₺${c.amount.toLocaleString('tr-TR')}</span>
+    </div>
+  `;
+});
+
+const bottomArea = document.getElementById('bottom-city-area');
+const maxBottom = bottomCities[bottomCities.length-1].amount; 
+bottomCities.forEach(c => {
+  const pct = (c.amount / maxBottom * 100).toFixed(1);
+  bottomArea.innerHTML += `
+    <div class="bar-row">
+      <span class="bar-lbl" title="${c.name}">${c.name}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%; background:#f47920;"></div>
+      </div>
+      <span class="bar-val">₺${c.amount.toLocaleString('tr-TR')}</span>
+    </div>
+  `;
+});
+
+// ==========================================
+// 4. BAĞIŞ PROFiLİ DAĞILIMI (PIE CHART - TUTAR EKLENDİ)
+// ==========================================
+const profileData = [
+  { label: 'Kayıtlı (Tek Seferlik)', val: 4200000000, color: '#0054a6' },
+  { label: 'Düzenli (Abonelik)',     val: 2500000000, color: '#107c41' },
+  { label: 'Anonim Bağışlar',        val: 1713000000, color: '#f47920' }
+];
+
+new Chart(document.getElementById('c-pie-profile'), {
+  type: 'pie',
+  data: {
+    labels: profileData.map(d => d.label),
+    datasets: [{
+      data: profileData.map(d => d.val),
+      backgroundColor: profileData.map(d => d.color),
+      borderWidth: 2, borderColor: '#ffffff'
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { 
+      legend: { display: false },
+      tooltip: { callbacks: { label: c => ` ₺${c.parsed.toLocaleString('tr-TR')}` } }
+    }
+  }
+});
+
+const pLeg = document.getElementById('leg-profile');
+profileData.forEach(d => {
+  const pct = ((d.val / totalTry) * 100).toFixed(1);
+  pLeg.innerHTML += `
+    <div class="pleg-item">
+      <span class="pleg-dot" style="background:${d.color}"></span>
+      <span style="flex:1;">${d.label}</span>
+      <span class="pleg-val">₺${d.val.toLocaleString('tr-TR')}</span>
+      <span class="pleg-pct" style="color:${d.color}">%${pct}</span>
+    </div>
+  `;
+});
+
+// ==========================================
+// 5. BAŞARISIZ İŞLEM NEDENLERİ (DATA BARS)
+// ==========================================
+const errD=[
+  {l:'Yetersiz bakiye', p:34, type:'user', c:'#f47920'},
+  {l:'Banka reddi',     p:22, type:'user', c:'#f47920'},
+  {l:'3D Secure hatası',p:18, type:'tech', c:'#c0392b'},
+  {l:'Kart bitimi',     p:14, type:'user', c:'#f47920'},
+  {l:'Sistem timeout',  p:7,  type:'tech', c:'#c0392b'},
+  {l:'Diğer',           p:5,  type:'tech', c:'#8a8886'},
+];
+const ea = document.getElementById('err-area');
+
+errD.forEach(e=>{
+  ea.innerHTML += `
+    <div class="bar-row">
+      <span class="bar-lbl">${e.l}</span>
+      <span class="err-tag ${e.type==='tech'?'e-tech':'e-user'}">${e.type==='tech'?'Teknik':'Kullanıcı'}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${e.p*2}%; background:${e.c};"></div>
+      </div>
+      <span class="bar-val" style="width:30px;">%${e.p}</span>
+    </div>`;
+});
+
+// ==========================================
+// 6. AYLARA GÖRE BAĞIŞ SIRALAMASI (DATA BARS)
+// ==========================================
+const monthD=[
+  {l:'Mart',    v:1185200000, c:'#0054a6'},
+  {l:'Aralık',  v:958000000,  c:'#0054a6'},
+  {l:'Temmuz',  v:840500000,  c:'#0054a6'},
+  {l:'Şubat',   v:768000000,  c:'#0054a6'},
+  {l:'Kasım',   v:680800000,  c:'#0054a6'},
+  {l:'Ocak',    v:646500000,  c:'#0054a6'},
+  {l:'Ağustos', v:584200000,  c:'#0054a6'},
+  {l:'Mayıs',   v:572500000,  c:'#0054a6'},
+  {l:'Ekim',    v:566000000,  c:'#0054a6'},
+  {l:'Haziran', v:542800000,  c:'#0054a6'},
+  {l:'Nisan',   v:536000000,  c:'#0054a6'},
+  {l:'Eylül',   v:532500000,  c:'#0054a6'}
+];
+const monthArea = document.getElementById('month-area');
+const maxMonth = Math.max(...monthD.map(m=>m.v));
+
+monthD.forEach(m=>{
+  const pct = (m.v / maxMonth * 100).toFixed(1);
+  monthArea.innerHTML += `
+    <div class="bar-row">
+      <span class="bar-lbl">${m.l}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%; background:${m.c};"></div>
+      </div>
+      <span class="bar-val">₺${m.v.toLocaleString('tr-TR')}</span>
+    </div>`;
+});
+</script>
+
+</body>
+</html>
